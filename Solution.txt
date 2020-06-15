@@ -1,0 +1,143 @@
+CSIM:
+
+First thing is to parse the arguments and allocate enough cache storage for the simulation.
+
+We get the number of set bits we have and get the number of sets.
+We check the number of lines there are per set, if 1, then skip LRU procedure. If more, then LRU must be allocated, the number of LRU bits is determined by log2(E) rounded up.
+We get the number of block bits we have and get the size of all blocks.
+
+
+struct cacheParams {  //store all the  basic info of cache
+	int s; 
+	int b; 
+	int E; 
+	int S; 
+	int B; 
+
+	int hits;
+	int misses;
+	int evicts;
+};
+
+struct lineInfo {          // store necessary info of a Line
+	int lru
+	int v;
+	long long int tag;
+	char *block;
+
+
+}
+
+
+
+https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/
+
+int main(int argc, char **argv)
+{
+	
+	struct cache myCache;
+	struct cacheParameter exampleParameter;
+	bzero(&exampleParameter, sizeof(exampleParameter));  // read the report for this function's purpose
+	long long numberOfSets;
+	long long sizeOfBlock;	
+	FILE *openTrace;
+	char instructionInTraceFile;
+	memoryAddress address;
+	int size;
+	char *trace_file;
+	char c;
+	//Read args from bash
+    while( (c=getopt(argc,argv,"s:E:b:t:vh")) != -1)
+	{
+        switch(c)
+		{
+        case 's':
+            exampleParameter.s = atoi(optarg);
+            break;
+        case 'E':
+            exampleParameter.E = atoi(optarg);
+            break;
+        case 'b':
+            exampleParameter.b = atoi(optarg);
+            break;
+        case 't':
+            trace_file = optarg;
+            break;
+        case 'h':`
+            exit(0);
+        default:
+            exit(1);
+        }
+    }
+}
+
+Each set has 3 fields. LRU, Valid and tag.
+Create cache with 2^s sets.
+Each set has E ways
+Take each parameter of the hit attempt. Which consists cache ID (if we create multiple caches), a specific tag and a set address. Go to the set, check for tag match, if hit, then check for which way did the hit happen, and check if it's the same as LRU. If it is the same as LRU, then we update the field accordingly. If not hit, then it's a miss, check LRU and update if necessary.
+
+
+
+Cache block is a pointer to set pointers, the set pointers refer to the E-lines. Each line is a struct.
+There are E lines in a set, there are 2^s sets. So malloc an array of 2^s sets. and for each set pointer malloc E*sizeof(struct cacheLine).
+
+void *ptr;
+void **arr = malloc(sizeof(void cacheLine*) * 2^S);
+for (int i = 0; i < 2^S; i++) {
+    arr[i] = ptr;
+}
+
+for (int j = 0; j < 2^S; i++) {
+    *arr[i] = malloc(E*sizeof(struct cacheLine));
+}
+
+traceRead  = fopen(trace_file, "r");
+	if (traceRead != NULL) {
+		while (fscanf(traceRead, " %c %llx,%d", &instructionLine, &address, &size) == 3) {
+			switch(instructionLine) {
+				case 'I':
+					break;
+				case 'L':
+					exampleParameter = accessTheCacheData(myCache, exampleParameter, address);
+					break;
+				case 'S':
+					exampleParameter = accessTheCacheData(myCache, exampleParameter, address);
+					break;
+				case 'M':
+					exampleParameter = accessTheCacheData(myCache, exampleParameter, address);
+					exampleParameter = accessTheCacheData(myCache, exampleParameter, address);	
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+malloc array
+struct cacheLine
+ valid
+ tag
+ LRUcounter
+
+
+Functions to define: Read, Evict.
+
+tag bits = 64 - s - b;
+set address = (address >> b) & ~(0x80000000 >> (t + b));
+tag = (address >> (s + b)) & ~(0x80000000 >> (b + s))
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <strings.h>
+#include <math.h>
+#include "cachelab.h"
+
+Program structure:
+Parse inputs.
+Create cache.
+Initialize hit, miss and eviction counters.
+Parse trace files
+while running, check cache hits.
+Print counters.
+Free cache.
